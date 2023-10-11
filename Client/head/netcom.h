@@ -3,6 +3,7 @@
 #include <winsock2.h>
 /**
  *@Send函数实现向ip的port的端口发送msg字符串
+ *@SendNotWait函数实现向ip的port的端口发送msg字符串，非阻塞式
  *@Listen函数实现监听来自port的端口的数据并返回，阻塞式
  *@ListenNoWait函数实现监听来自port的端口的数据并返回，等待100ms
  */
@@ -37,6 +38,57 @@ bool Send(const char *ip, int port, const char *msg)
         closesocket(clientSocket);
         WSACleanup();
         return false;
+    }
+    closesocket(clientSocket);
+    WSACleanup();
+    return true;
+}
+bool SendNoWait(const char *ip, int port, const char *msg)
+{
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    {
+        return false;
+    }
+    SOCKET clientSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (clientSocket == INVALID_SOCKET)
+    {
+        WSACleanup();
+        return false;
+    }
+    sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port = htons(port);
+    serverAddr.sin_addr.s_addr = inet_addr(ip);
+    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+    {
+        closesocket(clientSocket);
+        WSACleanup();
+        return false;
+    }
+    u_long mode = 1;
+    if (ioctlsocket(clientSocket, FIONBIO, &mode) == SOCKET_ERROR)
+    {
+        closesocket(clientSocket);
+        WSACleanup();
+        return false;
+    }
+    int result = send(clientSocket, msg, strlen(msg), 0);
+    if (result == SOCKET_ERROR)
+    {
+        int error = WSAGetLastError();
+        if (error == WSAEWOULDBLOCK)
+        {
+            closesocket(clientSocket);
+            WSACleanup();
+            return true;
+        }
+        else
+        {
+            closesocket(clientSocket);
+            WSACleanup();
+            return false;
+        }
     }
     closesocket(clientSocket);
     WSACleanup();

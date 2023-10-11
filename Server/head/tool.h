@@ -68,6 +68,7 @@ int findChar(const char find_string[], char want)
  */
 int getCommandWord(char res[], int start, const char command[], const char mid[] = " ")
 {
+    res[0] = '\0';
     int len = strlen(command);
     int w = start;
     for (; w < len && findChar(mid, command[w]) == 0; w++)

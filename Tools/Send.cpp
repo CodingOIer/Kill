@@ -6,7 +6,7 @@ char ip[1005];
 int main()
 {
     scanf("%s %d", ip, &port);
-    getchar();
+    getchar(int argv, char *argc[]);
     for (;;)
     {
         scanf("%[^\n]s", s);

