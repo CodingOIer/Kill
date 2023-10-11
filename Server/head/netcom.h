@@ -25,14 +25,38 @@ bool Send(const char *ip, int port, const char *msg)
     serverAddr.sin_family = AF_INET;
     serverAddr.sin_port = htons(port);
     serverAddr.sin_addr.s_addr = inet_addr(ip);
-    if (connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
+    u_long mode = 1;
+    if (ioctlsocket(clientSocket, FIONBIO, &mode) != 0)
     {
         closesocket(clientSocket);
         WSACleanup();
         return false;
     }
-    int result = send(clientSocket, msg, strlen(msg), 0);
+    int result = connect(clientSocket, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
     if (result == SOCKET_ERROR)
+    {
+        if (WSAGetLastError() != WSAEWOULDBLOCK)
+        {
+            closesocket(clientSocket);
+            WSACleanup();
+            return false;
+        }
+        fd_set writeSet;
+        FD_ZERO(&writeSet);
+        FD_SET(clientSocket, &writeSet);
+        timeval timeout;
+        timeout.tv_sec = 5;
+        timeout.tv_usec = 0;
+        result = select(0, NULL, &writeSet, NULL, &timeout);
+        if (result <= 0)
+        {
+            closesocket(clientSocket);
+            WSACleanup();
+            return false;
+        }
+    }
+    int bytesSent = send(clientSocket, msg, strlen(msg), 0);
+    if (bytesSent == SOCKET_ERROR)
     {
         closesocket(clientSocket);
         WSACleanup();

@@ -3,10 +3,10 @@
 int port;
 char s[1005];
 char ip[1005];
-int main()
+int main(int argv, char *argc[])
 {
     scanf("%s %d", ip, &port);
-    getchar(int argv, char *argc[]);
+    getchar();
     for (;;)
     {
         scanf("%[^\n]s", s);

