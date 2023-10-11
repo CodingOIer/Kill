@@ -205,6 +205,9 @@ void commandLs(int last)
     }
 }
 
+/**
+ *@处理命令key，开启或关闭键盘钩子
+ */
 void commandKey(int last)
 {
     char key_ip[MaxIP];
