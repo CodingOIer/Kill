@@ -32,7 +32,7 @@ std::mutex Mutex;
 void init()
 {
     system("chcp 65001");
-    SetConsoleTitle("Kill v1.0 Alpha1.0");
+    SetConsoleTitle("Kill v1.0.0");
     system("cls");
 }
 
@@ -244,6 +244,42 @@ void commandKey(int last)
     std::lock_guard<std::mutex> lock(Mutex);
 }
 
+void commandJiyu(int last)
+{
+    char jiyu_ip[MaxIP];
+    char jiyu_mode[MaxCommand];
+    int next = getCommandWord(jiyu_ip, last, command);
+    getCommandWord(jiyu_mode, next, command);
+    if (findChar(jiyu_ip, '.') == 3)
+    {
+        int kill_to = findComputerIP(jiyu_ip);
+        if (kill_to == -1)
+        {
+            printf("[WARING]: The IP is not in the database\n");
+        }
+        char tmp_command[MaxCommand];
+        sprintf(tmp_command, "k%c", strcmp(jiyu_mode, "true") == 0 ? 't' : 'f');
+        net::Send(jiyu_ip, 8800, tmp_command);
+        system("start KeyListen.exe");
+    }
+    else
+    {
+        int kill_to = findComputerName(jiyu_ip);
+        if (kill_to == -1)
+        {
+            printf("[ERROR]: Computer not found\n");
+        }
+        else
+        {
+            char tmp_command[MaxCommand];
+            sprintf(tmp_command, "k%c", strcmp(jiyu_mode, "true") == 0 ? 't' : 'f');
+            net::Send(computer_list[kill_to].ip, 8800, tmp_command);
+            system("start KeyListen.exe");
+        }
+    }
+    std::lock_guard<std::mutex> lock(Mutex);
+}
+
 /**
  *@命令解析
  */
@@ -271,6 +307,9 @@ void commandAnalysis()
     else if (strcmp(main_command, "key") == 0)
     {
         commandKey(next);
+    }
+    else if (strcmp(main_command, "jiyu") == 0)
+    {
     }
     else
     {
