@@ -10,9 +10,9 @@
                 "${file}",
                 "-o",
                 "${workspaceFolder}\\Build\\${fileBasenameNoExtension}.exe",
+                "-Wall",
                 "-lws2_32",
                 "-static",
-                "-Wall",
             ],
             "options": {
                 "cwd": "${fileDirname}"
