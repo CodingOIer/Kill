@@ -475,6 +475,9 @@ int findComputerName(const char want_computer[])
     return -1;
 }
 
+/**
+ *@输出Python文件，用于Jiyu
+ */
 void make_python()
 {
     FILE *f;
