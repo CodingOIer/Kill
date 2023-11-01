@@ -495,7 +495,6 @@ void make_python()
  */
 void commandAdd(int last)
 {
-    int len = strlen(command);
     char ip[MaxCommand];
     getCommandWord(ip, last, command);
     if (!checkIP(ip))
@@ -642,10 +641,7 @@ void commandJiyu(int last)
     next = getCommandWord(jiyu_ip, next, command);
     make_python();
     debug("%s\n", jiyu_mode);
-    if (strcmp(jiyu_mode, "add") == 0)
-    {
-    }
-    else if (strcmp(jiyu_mode, "kill") == 0)
+    if (strcmp(jiyu_mode, "kill") == 0)
     {
         char jiyu_command[MaxCommand];
         getCommandWord(jiyu_command, next, command, "\"");
@@ -682,6 +678,10 @@ void commandJiyu(int last)
             }
         }
     }
+    else
+    {
+        printf("[ERROR]: Command not found\n");
+    }
     std::lock_guard<std::mutex> lock(Mutex);
 }
 
@@ -690,7 +690,6 @@ void commandJiyu(int last)
  */
 void commandAnalysis()
 {
-    int len = strlen(command);
     char main_command[MaxCommand];
     int next = getCommandWord(main_command, 0, command);
     if (strcmp(main_command, "add") == 0)
