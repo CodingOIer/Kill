@@ -2,10 +2,11 @@
 #include "head\tool.h"
 #include <cstdio>
 #include <cstring>
-#include <iostream>
 #include <mutex>
 #include <thread>
 #include <windows.h>
+
+#define debug printf
 
 char python[][10005] = {
     "import sys",
@@ -508,7 +509,7 @@ void commandAdd(int last)
         if (net::Send(ip, 8801, msg))
         {
             char *name = net::ListenNoWait(9901);
-            printf("%s\n", name);
+            debug("%s\n", name);
             if (strlen(name) != 0)
             {
                 std::lock_guard<std::mutex> lock(Mutex);
@@ -640,7 +641,7 @@ void commandJiyu(int last)
     int next = getCommandWord(jiyu_mode, last, command);
     next = getCommandWord(jiyu_ip, next, command);
     make_python();
-    printf("%s\n", jiyu_mode);
+    debug("%s\n", jiyu_mode);
     if (strcmp(jiyu_mode, "add") == 0)
     {
     }
@@ -652,7 +653,7 @@ void commandJiyu(int last)
         {
             strcpy(jiyu_command, strtok(jiyu_command + 1, "\""));
         }
-        printf("%s %s %s\n", jiyu_mode, jiyu_command, jiyu_ip);
+        debug("%s %s %s\n", jiyu_mode, jiyu_command, jiyu_ip);
         if (findChar(jiyu_ip, '.') == 3)
         {
             int kill_to = findComputerIP(jiyu_ip);
@@ -662,7 +663,7 @@ void commandJiyu(int last)
             }
             char tmp_command[MaxCommand];
             sprintf(tmp_command, "python attack.py -ip %s -c \"%s\"", jiyu_ip, jiyu_command);
-            printf("%s\n", tmp_command);
+            debug("%s\n", tmp_command);
             system(tmp_command);
         }
         else
@@ -676,7 +677,7 @@ void commandJiyu(int last)
             {
                 char tmp_command[MaxCommand];
                 sprintf(tmp_command, "python attack.py -ip %s -c \"%s\"", jiyu_ip, computer_list[jiyu_to].ip);
-                printf("%s\n", tmp_command);
+                debug("%s\n", tmp_command);
                 system(tmp_command);
             }
         }
